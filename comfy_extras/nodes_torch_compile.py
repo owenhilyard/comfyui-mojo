@@ -13,7 +13,7 @@ class TorchCompileModel(io.ComfyNode):
                 io.Model.Input("model"),
                 io.Combo.Input(
                     "backend",
-                    options=["inductor", "cudagraphs"],
+                    options=["inductor", "cudagraphs", "max"],
                 ),
             ],
             outputs=[io.Model.Output()],
@@ -23,6 +23,10 @@ class TorchCompileModel(io.ComfyNode):
     @classmethod
     def execute(cls, model, backend) -> io.NodeOutput:
         m = model.clone()
+        if backend == "max":
+            from max_torch_backend import MaxCompiler
+            backend = MaxCompiler
+            
         set_torch_compile_wrapper(model=m, backend=backend)
         return io.NodeOutput(m)
 
