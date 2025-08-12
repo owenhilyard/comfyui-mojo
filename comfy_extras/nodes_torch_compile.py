@@ -5,7 +5,7 @@ class TorchCompileModel:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": { "model": ("MODEL",),
-                             "backend": (["inductor", "cudagraphs"],),
+                             "backend": (["inductor", "cudagraphs", "max"],),
                               }}
     RETURN_TYPES = ("MODEL",)
     FUNCTION = "patch"
@@ -15,6 +15,10 @@ class TorchCompileModel:
 
     def patch(self, model, backend):
         m = model.clone()
+        if backend == "max":
+            from max_torch_backend import MaxCompiler
+            backend = MaxCompiler
+            
         set_torch_compile_wrapper(model=m, backend=backend)
         return (m, )
 

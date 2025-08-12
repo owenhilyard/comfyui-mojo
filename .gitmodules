@@ -1,0 +1,3 @@
+[submodule "submodule/max-torch-backend"]
+	path = submodule/max-torch-backend
+	url = https://github.com/gabrieldemarmiesse/max-torch-backend.git
