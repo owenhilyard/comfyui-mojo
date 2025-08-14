@@ -16,8 +16,8 @@ class TorchCompileModel:
     def patch(self, model, backend):
         m = model.clone()
         if backend == "max":
-            from max_torch_backend import MaxCompiler
-            backend = MaxCompiler
+            from torch_max_backend.compiler import max_backend
+            backend = max_backend
             
         set_torch_compile_wrapper(model=m, backend=backend)
         return (m, )
