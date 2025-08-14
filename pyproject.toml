@@ -16,6 +16,7 @@ dependencies = [
     "gitpython>=3.1.45",
     "huggingface-hub>0.20",
     "kornia>=0.7.1",
+    "line-profiler>=5.0.0",
     "matrix-nio>=0.25.2",
     "max-torch-backend",
     "numpy>=1.25.0",
