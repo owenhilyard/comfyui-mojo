@@ -26,6 +26,7 @@ import importlib
 import platform
 import weakref
 import gc
+import torch_max_backend
 
 class VRAMState(Enum):
     DISABLED = 0    #No vram present: no need to move models to vram
@@ -140,6 +141,10 @@ except:
 if args.cpu:
     cpu_state = CPUState.CPU
 
+def is_max_capable() -> bool:
+    return len(torch_max_backend.get_accelerators()) > 1 # 1 means CPU only
+    # return False
+
 def is_intel_xpu():
     global cpu_state
     global xpu_available
@@ -177,7 +182,11 @@ def get_torch_device():
     if cpu_state == CPUState.CPU:
         return torch.device("cpu")
     else:
-        if is_intel_xpu():
+        if is_max_capable():
+            torch_max_backend.register_max_devices()
+            return torch.device("max_device", index=1) # TODO fix
+            # return torch.device("cpu")
+        elif is_intel_xpu():
             return torch.device("xpu", torch.xpu.current_device())
         elif is_ascend_npu():
             return torch.device("npu", torch.npu.current_device())
@@ -216,6 +225,10 @@ def get_total_memory(dev=None, torch_total_too=False):
             _, mem_total_mlu = torch.mlu.mem_get_info(dev)
             mem_total_torch = mem_reserved
             mem_total = mem_total_mlu
+        elif is_max_capable():
+            stats = torch_max_backend.get_accelerators()[0].stats
+            mem_total = stats['total_memory']
+            mem_total_torch = mem_total
         else:
             stats = torch.cuda.memory_stats(dev)
             mem_reserved = stats['reserved_bytes.all.current']
@@ -1182,6 +1195,10 @@ def get_free_memory(dev=None, torch_free_too=False):
             mem_free_mlu, _ = torch.mlu.mem_get_info(dev)
             mem_free_torch = mem_reserved - mem_active
             mem_free_total = mem_free_mlu + mem_free_torch
+        elif is_max_capable():
+            stats = torch_max_backend.get_accelerators()[0].stats
+            mem_free_torch = stats['total_memory']
+            mem_free_total = mem_free_torch
         else:
             stats = torch.cuda.memory_stats(dev)
             mem_active = stats['active_bytes.all.current']
@@ -1265,6 +1282,9 @@ def should_use_fp16(device=None, model_params=0, prioritize_performance=True, ma
 
     if torch.version.hip:
         return True
+    
+    if is_max_capable():
+        return True
 
     props = torch.cuda.get_device_properties(device)
     if props.major >= 8:
@@ -1335,6 +1355,9 @@ def should_use_bf16(device=None, model_params=0, prioritize_performance=True, ma
             if manual_cast:
                 return True
             return False
+        
+    if is_max_capable():
+        return True
 
     props = torch.cuda.get_device_properties(device)
 

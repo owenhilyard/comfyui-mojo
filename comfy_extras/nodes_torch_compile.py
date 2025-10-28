@@ -24,7 +24,8 @@ class TorchCompileModel(io.ComfyNode):
     def execute(cls, model, backend) -> io.NodeOutput:
         m = model.clone()
         if backend == "max":
-            from torch_max_backend.compiler import max_backend
+            from torch_max_backend import max_backend, register_max_devices
+            register_max_devices()
             backend = max_backend
             
         set_torch_compile_wrapper(model=m, backend=backend)

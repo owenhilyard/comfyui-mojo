@@ -23,6 +23,7 @@ from comfy.cli_args import args, PerformanceFeature
 import comfy.float
 import comfy.rmsnorm
 import contextlib
+import torch_max_backend
 
 def run_every_op():
     if torch.compiler.is_compiling():
@@ -35,7 +36,7 @@ def scaled_dot_product_attention(q, k, v, *args, **kwargs):
 
 
 try:
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and not len(torch_max_backend.get_accelerators()) > 1:
         from torch.nn.attention import SDPBackend, sdpa_kernel
         import inspect
         if "set_priority" in inspect.signature(sdpa_kernel).parameters:
@@ -44,7 +45,7 @@ try:
                 SDPBackend.EFFICIENT_ATTENTION,
                 SDPBackend.MATH,
             ]
-
+            
             SDPA_BACKEND_PRIORITY.insert(0, SDPBackend.CUDNN_ATTENTION)
 
             def scaled_dot_product_attention(q, k, v, *args, **kwargs):
@@ -60,7 +61,7 @@ try:
     if comfy.model_management.is_nvidia():
         if torch.backends.cudnn.version() >= 91002 and comfy.model_management.torch_version_numeric >= (2, 9) and comfy.model_management.torch_version_numeric <= (2, 10):
             #TODO: change upper bound version once it's fixed'
-            NVIDIA_MEMORY_CONV_BUG_WORKAROUND = True
+            NVIDIA_MEMORY_CONV_BUG_WORKAROUND = False
             logging.info("working around nvidia conv3d memory bug.")
 except:
     pass

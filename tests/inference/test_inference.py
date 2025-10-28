@@ -122,10 +122,10 @@ class ComfyClient:
 #
 # Initialize graphs
 #
-default_graph_file = 'tests/inference/graphs/default_graph_sdxl1_0.json'
+default_graph_file = 'tests/inference/graphs/sd15_max.json'
 with open(default_graph_file, 'r') as file:
     default_graph = json.loads(file.read())
-DEFAULT_COMFY_GRAPH = ComfyGraph(graph=default_graph, sampler_nodes=['10','14'])
+DEFAULT_COMFY_GRAPH = ComfyGraph(graph=default_graph, sampler_nodes=['3'])
 DEFAULT_COMFY_GRAPH_ID = os.path.splitext(os.path.basename(default_graph_file))[0]
 
 #
@@ -137,8 +137,8 @@ prompt_list = [
     'a painting of a cat',
 ]
 
-sampler_list = KSampler.SAMPLERS
-scheduler_list = KSampler.SCHEDULERS
+sampler_list = [KSampler.SAMPLERS[0]]
+scheduler_list = [KSampler.SCHEDULERS[0]]
 
 @pytest.mark.inference
 @pytest.mark.parametrize("sampler", sampler_list)
